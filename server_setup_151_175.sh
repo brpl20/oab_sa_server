@@ -177,15 +177,21 @@ cp "$ENV_FILE" "$REPO_DIR/.env"
 log_success "Arquivo .env copiado para o projeto"
 
 # 14. Baixar arquivo específico do S3
-log "☁️ Baixando arquivo do S3..."
-S3_SOURCE="s3://$AWS_BUCKET/input/lawyers_101.json"
-LOCAL_DEST="./lawyers_125.json"
+for i in {151..175}; do
+    S3_SOURCE="s3://$AWS_BUCKET/input/lawyers_${i}.json"
+    LOCAL_DEST="./lawyers_${i}.json"
+    
+    log "📥 Baixando lawyers_${i}.json..."
+    DOWNLOAD_TOTAL=$((DOWNLOAD_TOTAL + 1))
+    
+    if aws s3 cp "$S3_SOURCE" "$LOCAL_DEST"; then
+        log_success "✓ lawyers_${i}.json baixado com sucesso"
+        DOWNLOAD_SUCCESS=$((DOWNLOAD_SUCCESS + 1))
+    else
+        log_warning "⚠ Falha ao baixar lawyers_${i}.json (arquivo pode não existir)"
+    fi
+done
 
-if aws s3 cp "$S3_SOURCE" "$LOCAL_DEST"; then
-    log_success "Arquivo baixado: $S3_SOURCE -> $LOCAL_DEST"
-else
-    log_error "Falha ao baixar arquivo do S3: $S3_SOURCE"
-fi
 
 # 15. Verificar instalações
 log "🔍 Verificando instalações..."
