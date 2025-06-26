@@ -436,33 +436,34 @@ def get_firefox_driver_with_proxy():
     options.add_argument("--height=1080")
     
     # Configure proxy for Firefox
-    profile = webdriver.FirefoxProfile()
     proxy_host, proxy_port = PROXY_HOST.split(':')
-    profile.set_preference("network.proxy.type", 1)
-    profile.set_preference("network.proxy.http", proxy_host)
-    profile.set_preference("network.proxy.http_port", int(proxy_port))
-    profile.set_preference("network.proxy.ssl", proxy_host)
-    profile.set_preference("network.proxy.ssl_port", int(proxy_port))
-    profile.set_preference("network.proxy.share_proxy_settings", True)
-    profile.set_preference("network.proxy.autoconfig_url", "")
+    
+    # Em Selenium 4.x, as preferências são definidas diretamente nas Options
+    options.set_preference("network.proxy.type", 1)
+    options.set_preference("network.proxy.http", proxy_host)
+    options.set_preference("network.proxy.http_port", int(proxy_port))
+    options.set_preference("network.proxy.ssl", proxy_host)
+    options.set_preference("network.proxy.ssl_port", int(proxy_port))
+    options.set_preference("network.proxy.share_proxy_settings", True)
+    options.set_preference("network.proxy.autoconfig_url", "")
     
     # Enable JavaScript and content for modal functionality
-    profile.set_preference("javascript.enabled", True)
-    profile.set_preference("dom.webdriver.enabled", False)
-    profile.set_preference('useAutomationExtension', False)
+    options.set_preference("javascript.enabled", True)
+    options.set_preference("dom.webdriver.enabled", False)
+    options.set_preference('useAutomationExtension', False)
     
     # Don't disable images for modal content
-    # profile.set_preference("permissions.default.image", 2)  # Commented out
-    profile.set_preference("dom.ipc.plugins.enabled.libflashplayer.so", False)
+    # options.set_preference("permissions.default.image", 2)  # Commented out
+    options.set_preference("dom.ipc.plugins.enabled.libflashplayer.so", False)
     
     # Set user agent
-    profile.set_preference("general.useragent.override", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:119.0) Gecko/20100101 Firefox/119.0")
+    options.set_preference("general.useragent.override", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:119.0) Gecko/20100101 Firefox/119.0")
     
     try:
         driver = webdriver.Firefox(
             service=webdriver.firefox.service.Service(GeckoDriverManager().install()),
-            options=options,
-            firefox_profile=profile
+            options=options
+            # Remova o parâmetro firefox_profile
         )
         
         # Configure driver for better modal detection
@@ -473,6 +474,7 @@ def get_firefox_driver_with_proxy():
     except Exception as e:
         logger.error(f"Failed to create Firefox driver: {str(e)}")
         return None
+
 
 def get_driver_with_proxy():
     """Get a webdriver with proxy support (tries Chrome first, then Firefox)"""

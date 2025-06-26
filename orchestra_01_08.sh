@@ -23,8 +23,6 @@ VENV_PATH="/home/ubuntu/oab_scraper/oabsa_env/bin/activate"
 START_PART=001
 END_PART=025
 
-
-
 # Maximum number of Python scraping processes to run concurrently.
 # Start with a low number (e.g., 2-5) and increase gradually based on server resources (CPU, RAM)
 # and proxy provider limits. 100 concurrent Selenium instances are VERY resource-intensive.
