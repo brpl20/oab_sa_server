@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/home/brpl/code/oab_sa_server/request_lawyers_with_society_retry_errorr_with_delay_aws_server.py", line 2, in <module>
+    import requests
+ModuleNotFoundError: No module named 'requests'
