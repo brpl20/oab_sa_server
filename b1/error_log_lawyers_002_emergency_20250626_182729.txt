@@ -1,0 +1,19 @@
+Log de Erros de Emergência - ./jsons/lawyers_002.json
+==================================================
+
+Search failed or no results found for ES 52768
+Search failed or no results found for RO 60900
+Search failed or no results found for MG 186600
+Search failed or no results found for MS 60184
+Search failed or no results found for ES 63388
+Search failed or no results found for ES 43246
+Dados faltando - ID: 27949, Nome: SONIELLY ALVES E COSTA
+Search failed or no results found for TO 31222
+Search failed or no results found for MG 191678
+Search failed or no results found for RN 24587
+Search failed or no results found for SP 61017
+Search failed or no results found for TO 48893
+Unexpected error for MG 188881: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))
+Unexpected error for MG 187357: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))
+Unexpected error for MG 199181: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))
+Unexpected error for MG 28736: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))

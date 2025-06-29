@@ -1,5 +1,3 @@
-# Atualizado processamento
-
 import time
 import requests
 import os
@@ -105,6 +103,14 @@ batch_counter = 0
 
 # Initialize error log
 error_log = []
+
+# ===== MODIFICAÇÕES PARA SESSÃO PERSISTENTE E LOG DE IPs =====
+
+# Global requests session and counter for proxy IP rotation
+global_requests_session = None
+requests_session_use_count = 0
+MAX_REQUESTS_PER_SESSION = 100  # Novo limite de requisições por sessão
+current_proxy_ip = None
 
 def upload_to_s3(data, key, content_type='application/json'):
     """Upload data to S3 bucket"""
@@ -215,7 +221,7 @@ def signal_handler(signum, frame):
     print("🚪 Saindo...")
     sys.exit(0)
 
-# Register the signal handlerprocessed
+# Register the signal handler
 signal.signal(signal.SIGINT, signal_handler)
 
 def clean_state(state):
@@ -266,45 +272,20 @@ def should_process_record(record):
     # Record is complete and doesn't need reprocessing
     return False, "completo"
 
-# Proxy utility functions (integrated)
-# def get_requests_session_with_proxy():
-#     """Returns a requests session configured with the rotating proxy"""
-#     try:
-#         session = requests.Session()
-#         session.proxies.update(PROXY_CONFIG)
-#         # Add timeout and headers for better reliability
-#         session.timeout = 30
-#         session.headers.update({
-#             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'
-#         })
-#         return session
-#     except Exception as e:
-#         logger.error(f"Error creating session: {str(e)}")
-#         return None
+# ===== FUNÇÕES MODIFICADAS PARA SESSÃO PERSISTENTE =====
 
-def get_requests_session_with_proxy():
-    """Returns a requests session configured with the rotating proxy"""
-    session = requests.Session()
-    session.proxies.update(PROXY_CONFIG)
-    return session
-
-def get_current_ip():
-    """Get the current IP address being used by the proxy (silent)"""
+def get_current_ip(session=None):
+    """Get the current IP address being used by the proxy"""
     try:
-        session = get_requests_session_with_proxy()
-        if session is None:
+        current_session = session if session else get_requests_session_with_proxy_managed()
+        if current_session is None:
             return None
-        response = session.get('https://ip.decodo.com/json', timeout=10)
+        response = current_session.get('https://ip.decodo.com/json', timeout=10, verify=False)
         if response.status_code == 200:
             return response.json()
-    except:
-        pass
+    except Exception as e:
+        logger.warning(f"Erro ao obter IP atual: {e}")
     return None
-
-def verify_proxy_connection():
-    """Verify that the proxy connection is working properly (silent)"""
-    ip_data = get_current_ip()
-    return ip_data is not None
 
 def save_ip_log(ip_data, filename="proxy_ip_log.json"):
     """Save IP data to S3 and local backup"""
@@ -312,45 +293,116 @@ def save_ip_log(ip_data, filename="proxy_ip_log.json"):
         timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
         log_entry = {
             "timestamp": timestamp,
-            "ip_data": ip_data
+            "ip_data": ip_data,
+            "session_request_count": requests_session_use_count
         }
         
-        # Try to append to existing log or create new one
+        # Para S3, vamos criar um arquivo de log diário com append
+        s3_key = f"logs/proxy_ip_log_{time.strftime('%Y%m%d')}.jsonl"
+        log_line = json.dumps(log_entry, ensure_ascii=False) + "\n"
+        
+        # Tenta ler o conteúdo existente e adicionar, ou cria um novo
         try:
-            # For S3, we'll create a new timestamped entry
-            s3_key = f"logs/proxy_ip_log_{time.strftime('%Y%m%d')}.jsonl"
-            log_line = json.dumps(log_entry) + "\n"
-            
-            # Upload to S3 (this will overwrite, so for logs we might want a different approach)
-            upload_to_s3(log_line, s3_key, 'text/plain')
-        except:
-            pass
-            
+            existing_object = s3_client.get_object(Bucket=AWS_BUCKET, Key=s3_key)
+            existing_content = existing_object['Body'].read().decode('utf-8')
+            new_content = existing_content + log_line
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'NoSuchKey':
+                new_content = log_line
+            else:
+                raise
+        
+        s3_client.put_object(
+            Bucket=AWS_BUCKET,
+            Key=s3_key,
+            Body=new_content.encode('utf-8'),
+            ContentType='application/jsonl',
+            ServerSideEncryption='AES256'
+        )
+        
         # Local backup
-        try:
-            with open(filename, 'a') as f:
-                f.write(json.dumps(log_entry) + "\n")
-        except:
-            pass
-    except:
-        pass
+        with open(filename, 'a', encoding='utf-8') as f:
+            f.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
+    except Exception as e:
+        logger.error(f"Erro ao salvar log de IP: {e}")
 
-def make_request_with_retry(method, url, max_retries=4, retry_delay=2, **kwargs):
+def get_requests_session_with_proxy_managed():
+    """
+    Returns a requests session configured with the rotating proxy.
+    Manages session creation based on MAX_REQUESTS_PER_SESSION.
+    """
+    global global_requests_session, requests_session_use_count, current_proxy_ip
+
+    if global_requests_session is None or requests_session_use_count >= MAX_REQUESTS_PER_SESSION:
+        if global_requests_session:
+            print(f"🔄 Fechando sessão anterior após {requests_session_use_count} requisições.")
+            try:
+                global_requests_session.close()
+            except Exception as e:
+                logger.warning(f"Erro ao fechar sessão requests anterior: {e}")
+
+        print("🔄 Criando nova sessão requests com proxy...")
+        try:
+            session = requests.Session()
+            session.proxies.update(PROXY_CONFIG)
+            session.timeout = 30
+            session.headers.update({
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'
+            })
+            # Adicionar verify=False para ignorar erros de certificado (para teste)
+            session.verify = False 
+            
+            global_requests_session = session
+            requests_session_use_count = 0
+            
+            # Log e print do IP do proxy
+            ip_data = get_current_ip(session=global_requests_session)
+            if ip_data:
+                current_proxy_ip = ip_data.get('ip', 'unknown')
+                country = ip_data.get('country', 'unknown')
+                city = ip_data.get('city', 'unknown')
+                ip_info = f"🌍 IP do Proxy: {current_proxy_ip} ({city}, {country})"
+                print(f"✅ Nova sessão requests criada. {ip_info}")
+                logger.info(f"Nova sessão requests criada. {ip_info}")
+                save_ip_log(ip_data, "proxy_ip_log.json")
+            else:
+                current_proxy_ip = "unknown"
+                print("⚠️ Nova sessão requests criada, mas não foi possível verificar o IP do proxy.")
+                logger.warning("Nova sessão requests criada, mas não foi possível verificar o IP do proxy.")
+
+        except Exception as e:
+            logger.error(f"Erro ao criar sessão requests: {str(e)}")
+            global_requests_session = None
+            requests_session_use_count = 0
+            current_proxy_ip = None
+            return None
+            
+    requests_session_use_count += 1
+    return global_requests_session
+
+def verify_proxy_connection():
+    """Verify that the proxy connection is working properly"""
+    ip_data = get_current_ip(session=get_requests_session_with_proxy_managed())
+    return ip_data is not None
+
+def make_request_with_retry(method, url, max_retries=4, retry_delay=5, **kwargs):
     """Make HTTP request with retry logic for None responses and other errors"""
+    global requests_session_use_count, global_requests_session
+
     for attempt in range(max_retries):
         try:
-            session = get_requests_session_with_proxy()
+            session = get_requests_session_with_proxy_managed()
             if session is None:
-                print(f"        ⚠️ Tentativa {attempt + 1}: Falha ao criar sessão")
+                print(f"        ⚠️ Tentativa {attempt + 1}: Falha ao obter sessão requests.")
                 if attempt < max_retries - 1:
                     time.sleep(retry_delay)
                     continue
                 else:
-                    raise Exception("Failed to create session after all retries")
+                    raise Exception("Failed to get requests session after all retries")
             
-            # Adicionar verify=False aqui
-            kwargs['verify'] = False # <--- ADICIONE ESTA LINHA
-
+            # Print do IP atual a cada 10 requisições
+            if requests_session_use_count % 10 == 1:
+                print(f"        📊 Requisição #{requests_session_use_count}/{MAX_REQUESTS_PER_SESSION} - IP: {current_proxy_ip}")
             
             # Make the request
             if method.upper() == 'POST':
@@ -360,7 +412,7 @@ def make_request_with_retry(method, url, max_retries=4, retry_delay=2, **kwargs)
             else:
                 raise ValueError(f"Unsupported HTTP method: {method}")
             
-            # Check if response is None
+            # Check if response is None (shouldn't happen with requests, but for safety)
             if response is None:
                 print(f"        ⚠️ Tentativa {attempt + 1}: Resposta None recebida")
                 if attempt < max_retries - 1:
@@ -373,9 +425,38 @@ def make_request_with_retry(method, url, max_retries=4, retry_delay=2, **kwargs)
             response.raise_for_status()
             return response
             
+        except requests.exceptions.ProxyError as e:
+            error_msg = f"ProxyError na URL {url}: {str(e)}"
+            print(f"        ⚠️ Tentativa {attempt + 1} falhou: {error_msg}")
+            error_log.append(error_msg)
+            
+            # Se for um ProxyError, forçar a criação de uma nova sessão na próxima tentativa
+            if global_requests_session:
+                try:
+                    global_requests_session.close()
+                except:
+                    pass
+            global_requests_session = None
+            requests_session_use_count = 0
+            
+            if attempt >= max_retries - 1:
+                raise Exception(f"Request failed after {max_retries} attempts: {error_msg}")
+            
+            print(f"        ⏳ Aguardando {retry_delay}s antes da próxima tentativa...")
+            time.sleep(retry_delay)
         except Exception as e:
             error_msg = str(e)
             print(f"        ⚠️ Tentativa {attempt + 1} falhou: {error_msg}")
+            error_log.append(error_msg)
+            
+            # Se for um erro geral, também forçar a criação de uma nova sessão
+            if global_requests_session:
+                try:
+                    global_requests_session.close()
+                except:
+                    pass
+            global_requests_session = None
+            requests_session_use_count = 0
             
             # If it's the last attempt, raise the error
             if attempt >= max_retries - 1:
@@ -387,6 +468,8 @@ def make_request_with_retry(method, url, max_retries=4, retry_delay=2, **kwargs)
     
     # This should never be reached, but just in case
     raise Exception(f"Request failed after {max_retries} attempts")
+
+# ===== FIM DAS MODIFICAÇÕES DE SESSÃO =====
 
 # Webdriver management with proxy support (HEADLESS)
 def get_chrome_driver_with_proxy():
@@ -404,7 +487,6 @@ def get_chrome_driver_with_proxy():
     options.add_argument('--disable-features=VizDisplayCompositor')
     options.add_argument('--disable-extensions')
     options.add_argument('--disable-plugins')
-    # Removed --disable-images to ensure modal content loads properly
     
     # Enable JavaScript and allow all content for modal functionality
     options.add_argument('--enable-javascript')
@@ -414,9 +496,8 @@ def get_chrome_driver_with_proxy():
     options.add_argument('--allow-cross-origin-auth-prompt')
     
     # Adicionar para ignorar erros de certificado
-    options.add_argument('--ignore-certificate-errors') # <--- ADICIONE ESTA LINHA
-    options.add_argument('--allow-insecure-localhost') # <--- ADICIONE ESTA LINHA
-
+    options.add_argument('--ignore-certificate-errors')
+    options.add_argument('--allow-insecure-localhost')
     
     # Set user agent to appear more like a real browser
     options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36')
@@ -470,13 +551,8 @@ def get_firefox_driver_with_proxy():
     options.set_preference('useAutomationExtension', False)
     
     # Adicionar para ignorar erros de certificado
-    options.set_preference("security.enterprise_roots.enabled", True) # Confia em certificados da empresa
-    options.set_preference("security.cert_pinning.untrusted_root_removal", False) # Não remove raízes não confiáveis
-    
-    
-    # Don't disable images for modal content
-    # options.set_preference("permissions.default.image", 2)  # Commented out
-    options.set_preference("dom.ipc.plugins.enabled.libflashplayer.so", False)
+    options.set_preference("security.enterprise_roots.enabled", True)
+    options.set_preference("security.cert_pinning.untrusted_root_removal", False)
     
     # Set user agent
     options.set_preference("general.useragent.override", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:119.0) Gecko/20100101 Firefox/119.0")
@@ -485,7 +561,6 @@ def get_firefox_driver_with_proxy():
         driver = webdriver.Firefox(
             service=webdriver.firefox.service.Service(GeckoDriverManager().install()),
             options=options
-            # Remova o parâmetro firefox_profile
         )
         
         # Configure driver for better modal detection
@@ -496,7 +571,6 @@ def get_firefox_driver_with_proxy():
     except Exception as e:
         logger.error(f"Failed to create Firefox driver: {str(e)}")
         return None
-
 
 def get_driver_with_proxy():
     """Get a webdriver with proxy support (tries Chrome first, then Firefox)"""
@@ -991,172 +1065,150 @@ async def main():
         print(f"❌ Arquivo não encontrado: {batch_file}")
         sys.exit(1)
 
-    # Verify proxy connection at startup (silent)
-    print("🔄 Verificando conexão proxy...")
-    if verify_proxy_connection():
-        proxy_ip_data = get_current_ip()
-        if proxy_ip_data:
-            print(f"✅ Proxy ativo: {proxy_ip_data.get('ip', 'unknown')} ({proxy_ip_data.get('country', 'unknown')})")
-            save_ip_log(proxy_ip_data, "proxy_ip_log.json")
-    else:
-        print("⚠️ AVISO: Não foi possível verificar a conexão proxy.")
-
-    error_log = []
-    enhanced_lawyers = []
-    batch_counter = 0
-    BATCH_SIZE = 400  # Save every 400 lawyers
-
+    # Load batch data
     try:
         with open(batch_file, 'r', encoding='utf-8') as f:
-            lawyers_data = json.load(f)
+            batch_data = json.load(f)
+    except Exception as e:
+        print(f"❌ Erro ao carregar arquivo: {e}")
+        sys.exit(1)
 
-        # Clean state field for all records
-        for record in lawyers_data:
-            if 'state' in record:
-                original_state = record['state']
-                record['state'] = clean_state(original_state)
-                if original_state != record['state']:
-                    print(f"🧹 Estado corrigido: '{original_state}' -> '{record['state']}'")
+    # Filter records that need processing
+    records_to_process = []
+    skipped_count = 0
+    
+    for record in batch_data:
+        should_process, reason = should_process_record(record)
+        if should_process:
+            records_to_process.append((record, reason))
+        else:
+            skipped_count += 1
 
-        # Filter records that need processing
-        records_to_process = []
-        records_skipped = []
-        
-        for record in lawyers_data:
-            should_process, reason = should_process_record(record)
-            if should_process:
-                records_to_process.append(record)
-            else:
-                records_skipped.append(record)
-                enhanced_lawyers.append(record)  # Add skipped records to final list
+    total_records = len(batch_data)
+    to_process_count = len(records_to_process)
 
-        print(f"📊 ANÁLISE DE REGISTROS:")
-        print(f"  - Total de registros: {len(lawyers_data)}")
-        print(f"  - Para processar: {len(records_to_process)}")
-        print(f"  - Já completos (pulados): {len(records_skipped)}")
-        print(f"💾 Salvamento automático a cada {BATCH_SIZE} advogados")
-        print(f"🖥️  Modo HEADLESS ativado")
-        print(f"🔄 Sistema de retry: 4 tentativas com delay de 2s")
-        print(f"☁️  Dados salvos no S3: s3://{AWS_BUCKET}/oab_data/")
-        
-        if not records_to_process:
-            print("✅ Todos os registros já estão completos. Nada para processar.")
-            # Save final file with all records
-            final_filename = save_enhanced_lawyers_to_file(enhanced_lawyers, batch_file)
-            print(f"📁 Arquivo final salvo: {final_filename}")
-            return
+    print("="*80)
+    print("📊 ANÁLISE DE REGISTROS:")
+    print(f"  - Total de registros: {total_records}")
+    print(f"  - Para processar: {to_process_count}")
+    print(f"  - Já completos (pulados): {skipped_count}")
+    print("💾 Salvamento automático a cada 400 advogados")
+    print("🖥️  Modo HEADLESS ativado")
+    print("🔄 Sistema de retry: 4 tentativas com delay de 5s")
+    print("☁️  Dados salvos no S3: s3://oab-jsons-sa2/oab_data/")
+    print("🌍 Monitoramento de IP do proxy ativado")
+    print(f"📊 Sessão persistente: {MAX_REQUESTS_PER_SESSION} requisições por sessão")
+    print("="*80)
 
-        print("=" * 80)
+    if to_process_count == 0:
+        print("✅ Todos os registros já foram processados!")
+        return
 
-        # Get initial cookies and token with retry
-        print("🍪 Obtendo cookies e token iniciais...")
-        cookies, token = get_initial_cookies(max_retries=4, retry_delay=2)
+    # Verify proxy connection
+    print("🔍 Verificando conexão com proxy...")
+    if not verify_proxy_connection():
+        print("❌ Falha na conexão com proxy. Verifique suas credenciais.")
+        sys.exit(1)
+    print("✅ Proxy conectado e funcionando")
+
+    # Get initial cookies and token
+    print("🍪 Obtendo cookies e token iniciais...")
+    try:
+        cookies, token = get_initial_cookies()
         print("✅ Cookies e token obtidos")
+    except Exception as e:
+        print(f"❌ Falha ao obter cookies: {e}")
+        sys.exit(1)
 
-        # Process only the records that need processing
-        for i, record in enumerate(records_to_process):
-            try:
-                insc = record.get('oab_number')
-                state = record.get('state')
-                lawyer_id = record.get('id')
-                full_name = record.get('full_name', 'Unknown')
+    # Process records
+    enhanced_lawyers = []
+    batch_counter = 0
+    
+    for i, (record, reason) in enumerate(records_to_process, 1):
+        try:
+            # Clean state field
+            state = clean_state(record.get('state'))
+            insc = record.get('insc')
+            full_name = record.get('full_name', 'NOME_DESCONHECIDO')
 
-                if not insc or not state:
-                    error_message = f"Dados faltando - ID: {lawyer_id}, Nome: {full_name}"
-                    error_log.append(error_message)
-                    enhanced_lawyers.append(record)
+            print(f"\n[{i}/{to_process_count}] 👨‍💼 {full_name} ({state} {insc})")
+            print(f"    📋 Motivo: {reason}")
+
+            # Search and enhance record
+            enhanced_record, session_valid = await search_lawyer_with_updates(
+                insc, state, cookies, token, record
+            )
+
+            if not session_valid:
+                print("    🔄 Renovando sessão...")
+                try:
+                    cookies, token = get_initial_cookies()
+                    print("    ✅ Nova sessão obtida")
+                    
+                    # Retry with new session
+                    enhanced_record, session_valid = await search_lawyer_with_updates(
+                        insc, state, cookies, token, record
+                    )
+                    
+                    if not session_valid:
+                        print("    ❌ Falha mesmo com nova sessão")
+                        continue
+                        
+                except Exception as e:
+                    print(f"    ❌ Falha ao renovar sessão: {e}")
                     continue
 
-                print(f"\n[{i+1}/{len(records_to_process)}] 👨‍💼 {full_name} ({state} {insc})")
+            enhanced_lawyers.append(enhanced_record)
+            
+            # Determine completion status
+            if enhanced_record.get('has_society'):
+                societies_count = len(enhanced_record.get('society_complete_details', []))
+                print(f"    ✅ Concluído: {societies_count} sociedades processadas")
+            else:
+                print(f"    ✅ Concluído: sem sociedades")
+
+            # Auto-save every 400 records
+            if len(enhanced_lawyers) % 400 == 0:
+                batch_counter += 1
+                print(f"\n💾 SALVAMENTO AUTOMÁTICO #{batch_counter}")
+                save_enhanced_lawyers_to_file(enhanced_lawyers, batch_file, batch_counter)
+                print(f"📊 Progresso: {i}/{to_process_count} ({(i/to_process_count)*100:.1f}%)")
                 
-                # Show why this record is being processed
-                _, reason = should_process_record(record)
-                print(f"    📋 Motivo: {reason}")
+                # Memory cleanup
+                cleanup_memory()
 
-                # Process lawyer with retry system
-                enhanced_record, cookies_valid = await search_lawyer_with_updates(
-                    insc, state, cookies, token, record, max_retries=4, retry_delay=2
-                )
+        except KeyboardInterrupt:
+            print("\n🛑 Interrupção detectada pelo usuário")
+            break
+        except Exception as e:
+            error_message = f"Erro inesperado processando {record.get('full_name', 'UNKNOWN')}: {str(e)}"
+            print(f"    ❌ {error_message}")
+            error_log.append(error_message)
+            continue
 
-                # If cookies are invalid, get new ones and retry
-                if not cookies_valid:
-                    print("    🔄 Renovando cookies...")
-                    cookies, token = get_initial_cookies(max_retries=4, retry_delay=2)
-                    enhanced_record, _ = await search_lawyer_with_updates(
-                        insc, state, cookies, token, record, max_retries=2, retry_delay=2
-                    )
+    # Final save
+    if enhanced_lawyers:
+        print(f"\n💾 SALVAMENTO FINAL")
+        final_filename = save_enhanced_lawyers_to_file(enhanced_lawyers, batch_file)
+        print(f"✅ Processamento concluído!")
+        print(f"📊 Total processado: {len(enhanced_lawyers)} advogados")
+        print(f"📁 Arquivo final: {final_filename}")
+    else:
+        print("⚠️ Nenhum registro foi processado")
 
-                enhanced_lawyers.append(enhanced_record)
-                
-                sociedades_count = len(enhanced_record.get('society_complete_details', []))
-                has_society = enhanced_record.get('has_society', False)
-                name_corrected = enhanced_record.get('corrected_full_name') is not None
-                
-                status_parts = []
-                if has_society:
-                    status_parts.append(f"{sociedades_count} sociedades")
-                else:
-                    status_parts.append("sem sociedades")
-                    
-                if name_corrected:
-                    status_parts.append("nome corrigido")
-                
-                print(f"    ✅ Concluído: {', '.join(status_parts)}")
+    # Save error log if any
+    if error_log:
+        batch_base = os.path.splitext(os.path.basename(batch_file))[0]
+        error_file_name = f"error_log_{batch_base}_{time.strftime('%Y%m%d_%H%M%S')}.txt"
+        save_to_s3_and_local_backup(
+            "\n".join([f"Log de Erros - {batch_file}", "="*50, ""] + error_log),
+            error_file_name,
+            'text/plain'
+        )
+        print(f"📝 Log de erros salvo: {error_file_name}")
 
-                # Save every BATCH_SIZE lawyers (including skipped ones)
-                if len(enhanced_lawyers) % BATCH_SIZE == 0:
-                    batch_counter += 1
-                    print(f"\n💾 SALVAMENTO AUTOMÁTICO - LOTE {batch_counter}")
-                    save_enhanced_lawyers_to_file(enhanced_lawyers, batch_file, batch_counter)
-                    
-                    # Clean up memory
-                    print("🧹 Limpando memória...")
-                    cleanup_memory()
-                    processed_count = i + 1
-                    total_progress = len(records_skipped) + processed_count
-                    print(f"📊 Progresso: {processed_count}/{len(records_to_process)} processados, {total_progress}/{len(lawyers_data)} total ({(total_progress/len(lawyers_data)*100):.1f}%)")
-                    print("-" * 50)
-
-                time.sleep(1.2)
-
-            except Exception as e:
-                error_message = f"Erro processando {state} {insc} - {full_name}: {str(e)}"
-                print(f"💥 ERRO GERAL: {error_message}")
-                error_log.append(error_message)
-                enhanced_lawyers.append(record)
-
-        print("\n" + "=" * 80)
-        print("💾 SALVANDO RESULTADOS FINAIS...")
-
-        # Save final results
-        if enhanced_lawyers:
-            final_filename = save_enhanced_lawyers_to_file(enhanced_lawyers, batch_file)
-        else:
-            final_filename = "Nenhum dado para salvar"
-
-        print(f"\n🎉 PROCESSAMENTO CONCLUÍDO!")
-        print(f"📊 RESUMO:")
-        print(f"  - Arquivo processado: {os.path.basename(batch_file)}")
-        print(f"  - Total de registros: {len(lawyers_data)}")
-        print(f"  - Registros processados: {len(records_to_process)}")
-        print(f"  - Registros já completos (pulados): {len(records_skipped)}")
-        print(f"  - Com sociedades: {sum(1 for l in enhanced_lawyers if l.get('has_society'))}")
-        print(f"  - Nomes corrigidos: {sum(1 for l in enhanced_lawyers if l.get('corrected_full_name'))}")
-        print(f"  - Estados corrigidos: {sum(1 for record in lawyers_data if clean_state(record.get('state', '')) != record.get('state', ''))}")
-        print(f"  - Erros encontrados: {len(error_log)}")
-        print(f"  - Lotes salvos: {batch_counter}")
-        print(f"  - Arquivo final: {final_filename}")
-        print(f"  - Bucket S3: s3://{AWS_BUCKET}/oab_data/")
-
-        if error_log:
-            batch_base = os.path.splitext(os.path.basename(batch_file))[0]
-            error_file_name = f"error_log_{batch_base}_FINAL_{time.strftime('%Y%m%d_%H%M%S')}.txt"
-            error_content = f"Log de Erros Final - {batch_file}\n" + "="*50 + "\n\n" + "\n".join(error_log)
-            save_to_s3_and_local_backup(error_content, error_file_name, 'text/plain')
-            print(f"  - Log de erros: {error_file_name}")
-
-    except Exception as e:
-        print(f"💥 Erro crítico processando {batch_file}: {str(e)}")
+    print("🎉 Processamento finalizado!")
 
 if __name__ == "__main__":
     asyncio.run(main())
+

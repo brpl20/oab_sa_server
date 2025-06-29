@@ -1,0 +1,30 @@
+Log de Erros de Emergência - ./jsons/lawyers_007.json
+==================================================
+
+Search failed or no results found for SP 89735
+Search failed or no results found for SP 82652
+Search failed or no results found for MS 27684
+Search failed or no results found for ES 70128
+Search failed or no results found for DF 90877
+Search failed or no results found for RJ 86686
+Search failed or no results found for DF 97644
+Search failed or no results found for GO 86228
+Search failed or no results found for SP 12739
+Dados faltando - ID: 78454, Nome: ISABEL SUELY SILVA
+Search failed or no results found for DF 90671
+Dados faltando - ID: 78781, Nome: MATHEUS MARQUES LESMO
+Dados faltando - ID: 78840, Nome: CARINE DE OLIVEIRA BREMM GOULART
+Dados faltando - ID: 78913, Nome: OANGLAH MARIA ALMEIDA VAZ
+Dados faltando - ID: 79001, Nome: YURI DIAS MIRANDA
+Dados faltando - ID: 79080, Nome: NABILA MALPICI BESSA
+Search failed or no results found for SP 98797
+Search failed or no results found for PE 79543
+Search failed or no results found for BA 95498
+Search failed or no results found for DF 89966
+Dados faltando - ID: 79772, Nome: PEDRO HENRIQUE FERNANDES MARCON
+Search failed or no results found for SC 84910
+Search failed or no results found for ES 97062
+Unexpected error for MG 85982: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/GetDetail?gheixPNvAYMk6zunwW3WiXa0WXgnOco9fwpMU%2FOZ1uND%2FDwofHZ8eyvN7QPQIrhM27wrfAfu2%2FZOSYKZkrfCHw%3D%3D (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))
+Unexpected error for MG 72944: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))
+Unexpected error for MG 87922: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))
+Unexpected error for MG 66215: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))

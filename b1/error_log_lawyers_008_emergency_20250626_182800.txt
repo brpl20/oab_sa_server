@@ -1,0 +1,28 @@
+Log de Erros de Emergência - ./jsons/lawyers_008.json
+==================================================
+
+Search failed or no results found for SP 95765
+Search failed or no results found for DG 95396
+Search failed or no results found for SP 15879
+Dados faltando - ID: 87225, Nome: TASSIANO RIBEIRO TEZELLI
+Search failed or no results found for GO 94042
+Dados faltando - ID: 87511, Nome: ALESSANDRO ALMEIDA ESMI
+Search failed or no results found for M 19248
+Search failed or no results found for MS 13364
+Search failed or no results found for MS 27869
+Dados faltando - ID: 87833, Nome: MARINA BOIGUES IDALGO
+Search failed or no results found for SP 2212
+Search failed or no results found for MS 30083
+Dados faltando - ID: 88217, Nome: ANA BEATRIZ JORGE TEIXEIRA
+Search failed or no results found for AC 11296
+Search failed or no results found for DF 85617
+Search failed or no results found for PB 86820
+Search failed or no results found for SP 82167
+Search failed or no results found for MS 20281
+Search failed or no results found for MG 95631
+Search failed or no results found for DF 98619
+Search failed or no results found for ES 82852
+Search failed or no results found for SP 5083
+Failed to get modal data for sociedade 00100/699 after all retries
+Unexpected error for MS 27791: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))
+Unexpected error for MS 20380: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))

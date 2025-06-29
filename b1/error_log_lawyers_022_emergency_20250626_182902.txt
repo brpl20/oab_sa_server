@@ -1,0 +1,21 @@
+Log de Erros de Emergência - ./jsons/lawyers_022.json
+==================================================
+
+Search failed or no results found for SE 54707
+Dados faltando - ID: 209642, Nome: VINICIUS CAPITULINO DE QUEIROZ NEVES
+Search failed or no results found for PL 12268
+Search failed or no results found for PL 10731
+Search failed or no results found for SP 26047
+Search failed or no results found for PL 1007
+Dados faltando - ID: 210442, Nome: ADRYELLE DIANE CAVALCANTI BARBOSA
+Dados faltando - ID: 210811, Nome: ROBERTO AMORIM HOLDER
+Search failed or no results found for PL 10633
+Dados faltando - ID: 210963, Nome: MARCELO BELTRAO GAMA VIEIRA
+Search failed or no results found for RN 52141
+Search failed or no results found for PE 32104
+Search failed or no results found for BA 40606
+Unexpected error for PE 33343: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))
+Unexpected error for PE 36304: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))
+Unexpected error for PE 51575: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))
+Failed to get modal data for sociedade 000360 after all retries
+Unexpected error for PE 29826: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))

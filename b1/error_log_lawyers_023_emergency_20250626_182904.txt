@@ -1,0 +1,21 @@
+Log de Erros de Emergência - ./jsons/lawyers_023.json
+==================================================
+
+Dados faltando - ID: 218030, Nome: JOSE CELSO PAIXAO SANTOS
+Search failed or no results found for PE 60167
+Search failed or no results found for SE 51576
+Search failed or no results found for MA 47735
+Dados faltando - ID: 218273, Nome: SUELY DA SILVA LEAL MENDES
+Dados faltando - ID: 218776, Nome: GERALDO FRAZAO DE AQUINO JUNIOR
+Search failed or no results found for AL 7482
+Search failed or no results found for PL 121
+Search failed or no results found for P 10164
+Search failed or no results found for PL 11027
+Dados faltando - ID: 219512, Nome: EDMILSA MARIA NINA DA SILVA
+Dados faltando - ID: 220518, Nome: RODRIGO RIBEIRO FERRARI
+Search failed or no results found for PE 35265
+Search failed or no results found for SP 45944
+Search failed or no results found for SL 23145
+Failed to get modal data for sociedade 001450 after all retries
+Unexpected error for PE 28022: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/GetDetail?zDu6ocNwUp2R%2F8Tb6OcXKNTVSJ8AjbVkL9jlmnpFiRyYJdRRHWOjRFSe5doz6Asb5Q10vATRN8EyJ3B7wEHBAA%3D%3D (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))
+Unexpected error for PE 45584: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1028)')))

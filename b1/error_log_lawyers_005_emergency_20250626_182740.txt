@@ -1,0 +1,4 @@
+Log de Erros de Emergência - ./jsons/lawyers_005.json
+==================================================
+
+Dados faltando - ID: 56386, Nome: ANDERSON RODRIGO ZAGONEL

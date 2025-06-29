@@ -1,0 +1,20 @@
+Log de Erros de Emergência - ./jsons/lawyers_016.json
+==================================================
+
+Search failed or no results found for MA 5530
+Search failed or no results found for AP 9236
+Search failed or no results found for PA 34975
+Search failed or no results found for PA 8830
+Search failed or no results found for SP 16162
+Search failed or no results found for SP 29779
+Search failed or no results found for RR 25638
+Search failed or no results found for PB 32566
+Search failed or no results found for AC 27446
+Search failed or no results found for RR 7285
+Search failed or no results found for PA 36616
+Search failed or no results found for PB 24036
+Search failed or no results found for MA 1029
+Unexpected error for PA 35089: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/GetDetail?xIPsDPzxvAtfyIoMgGcoCvStO%2FBVrx9YI2iCULh1xbgE5%2BN%2FrRzsJBE7qgf7qOl3UHRlxRLJhey9GHk5jB75ig%3D%3D (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))
+Unexpected error for PE 15057: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))
+Unexpected error for PB 16286: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/GetDetail?Fp%2Fm1OlOmmIAtFOWLieLGIHVDA0cEdiKDA1rYF240%2B3sY3drjLVYq18qQEahZeapQzvoRCt2P7Tsn3q7xqFGFQ%3D%3D (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))
+Unexpected error for PB 23144: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))

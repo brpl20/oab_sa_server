@@ -1,0 +1,24 @@
+Log de Erros de Emergência - ./jsons/lawyers_009.json
+==================================================
+
+Search failed or no results found for SP 83596
+Search failed or no results found for MS 27708
+Search failed or no results found for MO 88080
+Dados faltando - ID: 97847, Nome: MARIA EDUARDA BORGES XAVIER
+Dados faltando - ID: 97930, Nome: GELSON EDUARDO SANTOS DA COSTA
+Search failed or no results found for SP 66009
+Search failed or no results found for MG 73561
+Search failed or no results found for SP 4237
+Search failed or no results found for DF 85866
+Search failed or no results found for ES 80762
+Search failed or no results found for SP 84581
+Search failed or no results found for MS 30433
+Search failed or no results found for DF 99065
+Search failed or no results found for SP 13779
+Search failed or no results found for ES 79960
+Search failed or no results found for TO 14327
+Search failed or no results found for MG 97807
+Search failed or no results found for BA 96630
+Dados faltando - ID: 99830, Nome: TIFFANY FERNANDES DA SILVA
+Search failed or no results found for CE 17773
+Dados faltando - ID: 99967, Nome: EMILY PRISCILA SOUZA SOARES ALMEIDA

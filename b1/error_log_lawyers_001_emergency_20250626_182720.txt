@@ -1,0 +1,18 @@
+Log de Erros de Emergência - ./jsons/lawyers_001.json
+==================================================
+
+Dados faltando - ID: 15215, Nome: ANDREA PEREIRA DE REZENDE CORREA
+Search failed or no results found for BA 199895
+Dados faltando - ID: 15720, Nome: ROBERTO RESENDE ROCHA
+Search failed or no results found for MG 193206
+Search failed or no results found for ES 52500
+Search failed or no results found for RN 65020
+Search failed or no results found for MG 181600
+Search failed or no results found for MS 60782
+Search failed or no results found for RJ 187891
+Search failed or no results found for BA 183905
+Dados faltando - ID: 18156, Nome: ELAINE CRISTINE ANTÓNIA COSTA
+Unexpected error for MG 190438: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))
+Unexpected error for MG 194438: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))
+Unexpected error for MG 63228: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))
+Unexpected error for MG 190155: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))

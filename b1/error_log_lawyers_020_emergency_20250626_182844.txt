@@ -1,0 +1,15 @@
+Log de Erros de Emergência - ./jsons/lawyers_020.json
+==================================================
+
+Search failed or no results found for RR 6062
+Search failed or no results found for DR 8699
+Search failed or no results found for PB 21166
+Search failed or no results found for PA 38118
+Search failed or no results found for BA 6481
+Search failed or no results found for PE 19044
+Search failed or no results found for PA 37496
+Unexpected error for PA 38636: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))
+Failed to get modal data for sociedade 00001039 after all retries
+Unexpected error for PB 14868: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))
+Unexpected error for PB 7304: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))
+Unexpected error for PB 10936: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))

@@ -1,0 +1,19 @@
+Log de Erros de Emergência - ./jsons/lawyers_024.json
+==================================================
+
+Search failed or no results found for AL 39546
+Dados faltando - ID: 226316, Nome: MARIO SERGIO MENEZES GALVÃO FILHO
+Dados faltando - ID: 226353, Nome: ORTENCIA EMANOELA ONOFRE TAVARES
+Search failed or no results found for TO 50401
+Search failed or no results found for PE 48742
+Search failed or no results found for PL 12468
+Search failed or no results found for PI 12205
+Search failed or no results found for PB 41391
+Search failed or no results found for MT 5105
+Dados faltando - ID: 227369, Nome: LARISSA BARBOSA PEREIRA DO NASCIMENTO PIRES
+Search failed or no results found for PB 56571
+Unexpected error for PI 10562: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))
+Unexpected error for PE 45497: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))
+Unexpected error for PE 65262: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))
+Unexpected error for PE 6277: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))
+Unexpected error for PE 44887: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/GetDetail?QXLWu5k1DqPj1Ym0Z1KTDaVCLCi9HMs7PsuKdiQ%2B16CQcRPCjspq5%2Bex2AY7IeLYrBjOtWOH6oQW3BfuezuS0w%3D%3D (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))

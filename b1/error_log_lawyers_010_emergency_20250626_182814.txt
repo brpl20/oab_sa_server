@@ -1,0 +1,41 @@
+Log de Erros de Emergência - ./jsons/lawyers_010.json
+==================================================
+
+Dados faltando - ID: 105918, Nome: KAMILA TAYANE PADILHA
+Search failed or no results found for MT 21645
+Search failed or no results found for RO 19813
+Search failed or no results found for MT 34447
+Search failed or no results found for SA 8241
+Search failed or no results found for MT 24969
+Dados faltando - ID: 106779, Nome: ARNALDO JOSE JACINTO
+Search failed or no results found for PA 27378
+Search failed or no results found for MT 14411
+Search failed or no results found for SP 8560
+Search failed or no results found for GO 5831
+Search failed or no results found for BR 16498
+Search failed or no results found for MT 27939
+Dados faltando - ID: 107542, Nome: EDGAR LUIZ DO COUTO
+Dados faltando - ID: 107546, Nome: LUIZ COELHO MESQUITA
+Search failed or no results found for MT 14690
+Dados faltando - ID: 107666, Nome: AUDINEIA SANTANA DA CRUZ
+Search failed or no results found for SP 25539
+Search failed or no results found for SA 13587
+Search failed or no results found for DR 1395
+Search failed or no results found for MT 21024
+Search failed or no results found for MT 12565
+Search failed or no results found for SP 9747
+Search failed or no results found for NO 21176
+Search failed or no results found for NO 16368
+Search failed or no results found for DF 10164
+Dados faltando - ID: 108421, Nome: BRUNA SIGNORATI
+Search failed or no results found for SP 11705
+Search failed or no results found for AN 16705
+Dados faltando - ID: 108814, Nome: LARYSSA MORAES DOS SANTOS TANNURE
+Search failed or no results found for SA 25261
+Search failed or no results found for PA 18616
+Failed to get modal data for sociedade 1396 after all retries
+Unexpected error for MT 19676: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/GetDetail?WARXAyFikaYzbeEMf07yBMlnbQaB7ojcMqhTQtP3PMlaEUPTlEv3zcbMDxi8SphrQC7ZmOPHOxLPBI6joValTg%3D%3D (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))
+Unexpected error for PA 15232: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))
+Unexpected error for MT 19112: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))
+Unexpected error for PA 14597: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))
+Unexpected error for PA 14865: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1028)')))

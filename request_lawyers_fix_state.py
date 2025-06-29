@@ -106,6 +106,22 @@ batch_counter = 0
 # Initialize error log
 error_log = []
 
+def extract_state_from_oab_id(oab_id):
+    """Extract state from oab_id field (e.g., 'MG_185929' -> 'MG')"""
+    if not oab_id:
+        return None
+    
+    # Split by underscore and get the first part (state)
+    parts = str(oab_id).split('_')
+    if len(parts) >= 2:
+        estado_correto = parts[0].upper()
+        # Validate it's a valid Brazilian state code (2 letters)
+        if len(estado_correto) == 2 and estado_correto.isalpha():
+            return estado_correto
+    
+    print(f"⚠️ oab_id inválido encontrado: '{oab_id}' (formato esperado: 'XX_NNNNN')")
+    return None
+
 def upload_to_s3(data, key, content_type='application/json'):
     """Upload data to S3 bucket"""
     try:
@@ -218,33 +234,37 @@ def signal_handler(signum, frame):
 # Register the signal handlerprocessed
 signal.signal(signal.SIGINT, signal_handler)
 
-def clean_state(state):
-    """Clean state field to keep only valid Brazilian state codes (2 letters)"""
-    if not state:
-        return state
+def clean_inconsistent_data(record):
+    """Clean inconsistent data from record when state mismatch is detected"""
+    cleaned_record = record.copy()
     
-    # Remove any non-alphabetic characters and convert to uppercase
-    cleaned = re.sub(r'[^A-Za-z]', '', str(state)).upper()
+    # Reset processing status
+    cleaned_record['processed'] = False
     
-    # Keep only first 2 characters if longer
-    if len(cleaned) > 2:
-        cleaned = cleaned[:2]
+    # Clear society-related data
+    cleaned_record['has_society'] = False
+    if 'corrected_full_name' in cleaned_record:
+        del cleaned_record['corrected_full_name']
+    if 'society_link' in cleaned_record:
+        del cleaned_record['society_link']
+    if 'society_basic_details' in cleaned_record:
+        del cleaned_record['society_basic_details']
+    if 'society_complete_details' in cleaned_record:
+        del cleaned_record['society_complete_details']
     
-    # Validate it's a valid Brazilian state code
-    valid_states = {
-        'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 
-        'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 
-        'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
-    }
-    
-    if cleaned in valid_states:
-        return cleaned
-    else:
-        print(f"⚠️ Estado inválido encontrado: '{state}' -> '{cleaned}' (não é um estado brasileiro válido)")
-        return cleaned  # Return anyway, let the API handle validation
+    return cleaned_record
 
 def should_process_record(record):
     """Determine if a record should be processed based on the criteria"""
+    # PRIORITY CHECK: State consistency from oab_id
+    oab_id = record.get('oab_id')
+    current_state = record.get('state')
+    
+    if oab_id:
+        estado_correto = extract_state_from_oab_id(oab_id)
+        if estado_correto and current_state != estado_correto:
+            return True, f"estado inconsistente: {current_state} != {estado_correto} (de oab_id)"
+    
     # Scenario 1: Record doesn't have "processed": true
     if not record.get('processed', False):
         return True, "não processado"
@@ -267,21 +287,6 @@ def should_process_record(record):
     return False, "completo"
 
 # Proxy utility functions (integrated)
-# def get_requests_session_with_proxy():
-#     """Returns a requests session configured with the rotating proxy"""
-#     try:
-#         session = requests.Session()
-#         session.proxies.update(PROXY_CONFIG)
-#         # Add timeout and headers for better reliability
-#         session.timeout = 30
-#         session.headers.update({
-#             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'
-#         })
-#         return session
-#     except Exception as e:
-#         logger.error(f"Error creating session: {str(e)}")
-#         return None
-
 def get_requests_session_with_proxy():
     """Returns a requests session configured with the rotating proxy"""
     session = requests.Session()
@@ -679,24 +684,6 @@ def get_modal_data_with_selenium(url, max_wait=30, max_retries=4, retry_delay=2)
             return {
                 'extraction_method': 'specific_modal_parser',
                 'content_loaded': False,
-                'error': error_msg,
-                'timestamp': time.strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
-                'url': url,
-                'extraction_success': 0
-            }
-        except Exception as e:
-            error_msg = f"Error getting modal data from {url}: {str(e)}"
-            logger.error(error_msg)
-            print(f"        ❌ Tentativa {attempt + 1}: Erro geral: {str(e)}")
-            
-            if attempt < max_retries - 1:
-                print(f"        ⏳ Aguardando {retry_delay}s antes da próxima tentativa...")
-                time.sleep(retry_delay)
-                continue
-            
-            return {
-                'extraction_method': 'specific_modal_parser',
-                'content_loaded': False,
                 'error': str(e),
                 'timestamp': time.strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
                 'url': url,
@@ -709,7 +696,7 @@ def get_modal_data_with_selenium(url, max_wait=30, max_retries=4, retry_delay=2)
                 except:
                     pass
 
-async def process_sociedade_async(sociedade, state, insc, lawyer_name, executor):
+async def process_sociedade_async(sociedade, estado_correto, oab_number, lawyer_name, executor):
     """Process a single sociedade asynchronously with retry logic"""
     try:
         print(f"      📋 Processando sociedade: {sociedade['NomeSoci']} ({sociedade['Insc']})")
@@ -737,8 +724,8 @@ async def process_sociedade_async(sociedade, state, insc, lawyer_name, executor)
         final_result = {
             'lawyer_info': {
                 'lawyer_name': lawyer_name,
-                'lawyer_state': state,
-                'lawyer_insc': insc
+                'lawyer_state': estado_correto,
+                'lawyer_oab_number': oab_number
             },
             'basic_info': {
                 'Insc': sociedade['Insc'],
@@ -752,7 +739,7 @@ async def process_sociedade_async(sociedade, state, insc, lawyer_name, executor)
         }
 
         # Save to S3 instead of local file
-        filename = f"sociedade_{state}_{insc}_{sanitize_filename(sociedade['Insc'])}_{int(time.time())}.json"
+        filename = f"sociedade_{estado_correto}_{oab_number}_{sanitize_filename(sociedade['Insc'])}_{int(time.time())}.json"
         s3_url = save_to_s3_and_local_backup(final_result, filename)
         
         if s3_url:
@@ -772,15 +759,15 @@ def sanitize_filename(filename):
     """Remove invalid characters from filename"""
     return re.sub(r'[<>:"/\\|?*]', '_', filename)
 
-async def search_lawyer_with_updates(insc, state, cookies, token, original_record, max_retries=4, retry_delay=2):
+async def search_lawyer_with_updates(oab_number, estado_correto, cookies, token, original_record, max_retries=4, retry_delay=2):
     """Search for lawyer and update record with external data, plus extract sociedades ASYNC with robust retry"""
     search_url = "https://cna.oab.org.br/Home/Search"
     search_data = {
         "__RequestVerificationToken": token,
         "IsMobile": "false",
         "NomeAdvo": "",
-        "Insc": str(insc),
-        "Uf": state,
+        "Insc": str(oab_number),
+        "Uf": estado_correto,
         "TipoInsc": ""
     }
     headers = {
@@ -797,6 +784,9 @@ async def search_lawyer_with_updates(insc, state, cookies, token, original_recor
     enhanced_record['society_link'] = None
     enhanced_record['society_basic_details'] = []
     enhanced_record['society_complete_details'] = []
+    
+    # Update state to the correct one from oab_id
+    enhanced_record['state'] = estado_correto
 
     for attempt in range(max_retries):
         try:
@@ -816,7 +806,7 @@ async def search_lawyer_with_updates(insc, state, cookies, token, original_recor
             search_result = response.json()
 
             if not (search_result['Success'] and search_result['Data']):
-                error_message = f"Search failed or no results found for {state} {insc}"
+                error_message = f"Search failed or no results found for {estado_correto} {oab_number}"
                 print(f"    ❌ {error_message}")
                 if attempt < max_retries - 1:
                     print(f"    ⏳ Aguardando {retry_delay}s antes da próxima tentativa...")
@@ -891,8 +881,8 @@ async def search_lawyer_with_updates(insc, state, cookies, token, original_recor
                 for sociedade in sociedades_data:
                     task = process_sociedade_async(
                         sociedade,
-                        state,
-                        insc,
+                        estado_correto,
+                        oab_number,
                         enhanced_record.get('corrected_full_name') or enhanced_record['full_name'],
                         executor
                     )
@@ -926,7 +916,7 @@ async def search_lawyer_with_updates(insc, state, cookies, token, original_recor
                 print(f"    ⏳ Tentando novamente em {retry_delay} segundos...")
                 time.sleep(retry_delay)
             else:
-                error_message = f"Max retries exceeded for {state} {insc}: {str(e)}"
+                error_message = f"Max retries exceeded for {estado_correto} {oab_number}: {str(e)}"
                 print(f"    ❌ {error_message}")
                 error_log.append(error_message)
                 return enhanced_record, True
@@ -936,7 +926,7 @@ async def search_lawyer_with_updates(insc, state, cookies, token, original_recor
                 print(f"    ⏳ Tentando novamente em {retry_delay} segundos...")
                 time.sleep(retry_delay)
             else:
-                error_message = f"Unexpected error for {state} {insc}: {str(e)}"
+                error_message = f"Unexpected error for {estado_correto} {oab_number}: {str(e)}"
                 print(f"    ❌ {error_message}")
                 error_log.append(error_message)
                 return enhanced_record, True
@@ -1010,21 +1000,32 @@ async def main():
         with open(batch_file, 'r', encoding='utf-8') as f:
             lawyers_data = json.load(f)
 
-        # Clean state field for all records
+        # Process and extract states from oab_id for all records
+        state_corrections = 0
         for record in lawyers_data:
-            if 'state' in record:
-                original_state = record['state']
-                record['state'] = clean_state(original_state)
-                if original_state != record['state']:
-                    print(f"🧹 Estado corrigido: '{original_state}' -> '{record['state']}'")
+            oab_id = record.get('oab_id')
+            current_state = record.get('state')
+            
+            if oab_id:
+                estado_correto = extract_state_from_oab_id(oab_id)
+                if estado_correto and current_state != estado_correto:
+                    print(f"🧹 Estado corrigido: '{current_state}' -> '{estado_correto}' (de oab_id: {oab_id})")
+                    state_corrections += 1
 
         # Filter records that need processing
         records_to_process = []
         records_skipped = []
+        state_inconsistent_count = 0
         
         for record in lawyers_data:
             should_process, reason = should_process_record(record)
             if should_process:
+                # If it's a state inconsistency, clean the record first
+                if "estado inconsistente" in reason:
+                    record = clean_inconsistent_data(record)
+                    state_inconsistent_count += 1
+                    print(f"🧹 Dados limpos para {record.get('full_name', 'Unknown')} devido a inconsistência de estado")
+                
                 records_to_process.append(record)
             else:
                 records_skipped.append(record)
@@ -1034,6 +1035,8 @@ async def main():
         print(f"  - Total de registros: {len(lawyers_data)}")
         print(f"  - Para processar: {len(records_to_process)}")
         print(f"  - Já completos (pulados): {len(records_skipped)}")
+        print(f"  - Estados corrigidos de oab_id: {state_corrections}")
+        print(f"  - Registros com estado inconsistente (limpos): {state_inconsistent_count}")
         print(f"💾 Salvamento automático a cada {BATCH_SIZE} advogados")
         print(f"🖥️  Modo HEADLESS ativado")
         print(f"🔄 Sistema de retry: 4 tentativas com delay de 2s")
@@ -1056,26 +1059,30 @@ async def main():
         # Process only the records that need processing
         for i, record in enumerate(records_to_process):
             try:
-                insc = record.get('oab_number')
-                state = record.get('state')
+                oab_number = record.get('oab_number')
+                oab_id = record.get('oab_id')
                 lawyer_id = record.get('id')
                 full_name = record.get('full_name', 'Unknown')
 
-                if not insc or not state:
-                    error_message = f"Dados faltando - ID: {lawyer_id}, Nome: {full_name}"
+                # Extract correct state from oab_id
+                estado_correto = extract_state_from_oab_id(oab_id)
+                
+                if not oab_number or not estado_correto:
+                    error_message = f"Dados faltando - ID: {lawyer_id}, Nome: {full_name}, oab_id: {oab_id}"
                     error_log.append(error_message)
                     enhanced_lawyers.append(record)
                     continue
 
-                print(f"\n[{i+1}/{len(records_to_process)}] 👨‍💼 {full_name} ({state} {insc})")
+                print(f"\n[{i+1}/{len(records_to_process)}] 👨‍💼 {full_name} ({estado_correto} {oab_number})")
                 
                 # Show why this record is being processed
                 _, reason = should_process_record(record)
                 print(f"    📋 Motivo: {reason}")
+                print(f"    🆔 oab_id: {oab_id} -> Estado: {estado_correto}")
 
-                # Process lawyer with retry system
+                # Process lawyer with retry system using correct state from oab_id
                 enhanced_record, cookies_valid = await search_lawyer_with_updates(
-                    insc, state, cookies, token, record, max_retries=4, retry_delay=2
+                    oab_number, estado_correto, cookies, token, record, max_retries=4, retry_delay=2
                 )
 
                 # If cookies are invalid, get new ones and retry
@@ -1083,7 +1090,7 @@ async def main():
                     print("    🔄 Renovando cookies...")
                     cookies, token = get_initial_cookies(max_retries=4, retry_delay=2)
                     enhanced_record, _ = await search_lawyer_with_updates(
-                        insc, state, cookies, token, record, max_retries=2, retry_delay=2
+                        oab_number, estado_correto, cookies, token, record, max_retries=2, retry_delay=2
                     )
 
                 enhanced_lawyers.append(enhanced_record)
@@ -1091,6 +1098,7 @@ async def main():
                 sociedades_count = len(enhanced_record.get('society_complete_details', []))
                 has_society = enhanced_record.get('has_society', False)
                 name_corrected = enhanced_record.get('corrected_full_name') is not None
+                state_updated = enhanced_record.get('state') != record.get('state')
                 
                 status_parts = []
                 if has_society:
@@ -1100,6 +1108,9 @@ async def main():
                     
                 if name_corrected:
                     status_parts.append("nome corrigido")
+                    
+                if state_updated:
+                    status_parts.append(f"estado atualizado para {estado_correto}")
                 
                 print(f"    ✅ Concluído: {', '.join(status_parts)}")
 
@@ -1120,7 +1131,7 @@ async def main():
                 time.sleep(1.2)
 
             except Exception as e:
-                error_message = f"Erro processando {state} {insc} - {full_name}: {str(e)}"
+                error_message = f"Erro processando {estado_correto} {oab_number} - {full_name}: {str(e)}"
                 print(f"💥 ERRO GERAL: {error_message}")
                 error_log.append(error_message)
                 enhanced_lawyers.append(record)
@@ -1140,9 +1151,10 @@ async def main():
         print(f"  - Total de registros: {len(lawyers_data)}")
         print(f"  - Registros processados: {len(records_to_process)}")
         print(f"  - Registros já completos (pulados): {len(records_skipped)}")
+        print(f"  - Estados corrigidos de oab_id: {state_corrections}")
+        print(f"  - Registros com estado inconsistente: {state_inconsistent_count}")
         print(f"  - Com sociedades: {sum(1 for l in enhanced_lawyers if l.get('has_society'))}")
         print(f"  - Nomes corrigidos: {sum(1 for l in enhanced_lawyers if l.get('corrected_full_name'))}")
-        print(f"  - Estados corrigidos: {sum(1 for record in lawyers_data if clean_state(record.get('state', '')) != record.get('state', ''))}")
         print(f"  - Erros encontrados: {len(error_log)}")
         print(f"  - Lotes salvos: {batch_counter}")
         print(f"  - Arquivo final: {final_filename}")

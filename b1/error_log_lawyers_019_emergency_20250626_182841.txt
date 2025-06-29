@@ -1,0 +1,21 @@
+Log de Erros de Emergência - ./jsons/lawyers_019.json
+==================================================
+
+Search failed or no results found for BA 8741
+Search failed or no results found for SE 18592
+Search failed or no results found for PE 3148
+Search failed or no results found for PA 39211
+Search failed or no results found for PE 7180
+Search failed or no results found for RR 11012
+Search failed or no results found for SP 3310
+Search failed or no results found for PE 6659
+Search failed or no results found for PA 35600
+Search failed or no results found for RR 17573
+Search failed or no results found for MI 29509
+Search failed or no results found for PE 8293
+Unexpected error for PB 13331: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/GetDetail?bYAbYLKeSSmdxKP5wQL2XVel%2BeHorTM%2BlddwBO%2Bi40U%2BpArGliAcpDRoe8Y%2B4%2F%2FzZ2Y0QecMQgBcVG5ErBWh%2FA%3D%3D (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))
+Unexpected error for PB 31538: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))
+Unexpected error for PA 31978: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))
+Unexpected error for PE 18024: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))
+Unexpected error for PE 16465: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))
+Unexpected error for PE 11643: Request failed after 4 attempts: HTTPSConnectionPool(host='cna.oab.org.br', port=443): Max retries exceeded with url: /Home/Search (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 503 Service Unavailable')))

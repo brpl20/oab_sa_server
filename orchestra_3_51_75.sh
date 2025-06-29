@@ -13,15 +13,15 @@ BASE_PATH="/home/ubuntu/oab_sa_server"
 # Name of your Python scraping script.
 # Make sure this script is in the same directory as this Bash runner script, 
 # or provide the full path if it's elsewhere.
-PYTHON_SCRIPT="request_lawyers_with_society_retry_errorr_with_delay_aws_server.py" 
+PYTHON_SCRIPT="request_lawyers_fix_state.py" 
 
 # Path to your Python virtual environment activation script.
 # Example: /home/ubuntu/oab_scraper/oabsa_env/bin/activate
 VENV_PATH="/home/ubuntu/oab_sa_server/oab_sa_server_env/bin/activate" 
 
 # Range of lawyer part files to process lawyers_001.json to lawyers_200.json
-START_PART=126
-END_PART=150
+START_PART=051
+END_PART=075
 
 # Maximum number of Python scraping processes to run concurrently.
 # Start with a low number (e.g., 2-5) and increase gradually based on server resources (CPU, RAM)
